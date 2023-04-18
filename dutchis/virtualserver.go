@@ -113,6 +113,8 @@ func resourceVirtualServerCreate(d *schema.ResourceData, meta interface{}) error
 		sshKeys = append(sshKeys, sshKey.(string))
 	}
 
+	logger.Info().Msg("Parsed ssh keys from config")
+
 	type NewVirtualServer struct {
 		Hostname string `json:"hostname"`
 		Class string `json:"class"`
@@ -125,7 +127,7 @@ func resourceVirtualServerCreate(d *schema.ResourceData, meta interface{}) error
 		Network int `json:"network"`
 		Disk int `json:"disk"`
 	}
-	
+
 	newVirtualServer := NewVirtualServer{
 		Hostname: d.Get("hostname").(string),
 		Class: d.Get("class").(string),
@@ -138,36 +140,42 @@ func resourceVirtualServerCreate(d *schema.ResourceData, meta interface{}) error
 		Network: d.Get("network").(int),
 		Disk: d.Get("disk").(int),
 	}
-	
+
 	logger.Info().Msg("Creating new virtual server")
 
 	body, err := json.Marshal(newVirtualServer)
 	if err != nil {
+		logger.Error().Err(err).Msg("Failed to marshal JSON")
 		return err
 	}
 
 	req, err := http.NewRequest("POST", "https://dutchis.net/api/v1/virtualservers", bytes.NewBuffer(body))
 	if err != nil {
+		logger.Error().Err(err).Msg("Failed to create HTTP request")
 		return err
 	}
+
 	req.Header.Add("Authorization", "Bearer "+providerConfig.APIToken)
 	req.Header.Add("X-Team-Uuid", providerConfig.TeamUUID)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		logger.Error().Err(err).Msg("Failed to send HTTP request")
 		return err
 	}
-	
+
     defer resp.Body.Close()
     body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
+		logger.Error().Err(err).Msg("Failed to read HTTP response")
 		return err
 	}
-	
+
     var virtualserver VirtualServer
     if err := json.Unmarshal(body, &virtualserver); err != nil { 
+		logger.Error().Err(err).Msg("Failed to unmarshal JSON")
         return err
     }
-	
+
     d.SetId(virtualserver.UUID)
 
 	logger.Info().Msg("Created new virtual server")
