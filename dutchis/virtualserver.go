@@ -185,10 +185,6 @@ func resourceVirtualServerCreate(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourceVirtualServerRead(d *schema.ResourceData, meta interface{}) error {
-	return _resourceVirtualServerRead(d, meta)
-}
-
-func _resourceVirtualServerRead(d *schema.ResourceData, meta interface{}) error {
 	pconf := meta.(*providerConfiguration)
 	lock := parallelBegin(pconf)
 	defer lock.unlock()
@@ -199,8 +195,10 @@ func _resourceVirtualServerRead(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 
-	req, err := http.NewRequest("POST", "https://dutchis.net/api/v1/virtualservers/" + d.Id(), nil)
+	logger.Info().Msg("Reading virtual server: " + d.Id())
+	req, err := http.NewRequest("GET", "https://dutchis.net/api/v1/virtualservers/" + d.Id(), nil)
 	if err != nil {
+		logger.Error().Err(err).Msg("Failed to create HTTP request")
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+providerConfig.APIToken)
@@ -214,17 +212,19 @@ func _resourceVirtualServerRead(d *schema.ResourceData, meta interface{}) error 
     defer resp.Body.Close()
     body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		logger.Error().Err(err).Msg("Failed to read HTTP response")
 		return err
 	}
 	
     var virtualserver VirtualServer
     if err := json.Unmarshal(body, &virtualserver); err != nil { 
+		logger.Error().Err(err).Msg("Failed to unmarshal JSON")
         return err
     }
 
 	d.Set("hostname", virtualserver.Name)
 
-	logger.Info().Msg("Reading configuration for virtual server: " + d.Id())
+	logger.Info().Msg("Read configuration for virtual server: " + d.Id())
 
 	return nil
 }
@@ -233,9 +233,15 @@ func resourceVirtualServerDelete(d *schema.ResourceData, meta interface{}) error
 	providerConfig := meta.(*providerConfiguration)
 	lock := parallelBegin(providerConfig)
 	defer lock.unlock()
+	
+	logger, err := CreateSubLogger("resourceVirtualServerDelete")
+	if err != nil {
+		return err
+	}
 
 	req, err := http.NewRequest("DELETE", "https://dutchis.net/api/v1/virtualservers/" + d.Id(), nil)
 	if err != nil {
+		logger.Error().Err(err).Msg("Failed to create HTTP request")
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+providerConfig.APIToken)
@@ -272,17 +278,20 @@ func resourceVirtualServerUpdate(d *schema.ResourceData, meta interface{}) error
 
 	body, err := json.Marshal(updateVirtualServer)
 	if err != nil {
+		logger.Error().Err(err).Msg("Failed to marshal JSON")
 		return err
 	}
 
 	req, err := http.NewRequest("PATCH", "https://dutchis.net/api/v1/virtualservers/" + d.Id() + "/specs", bytes.NewBuffer(body))
 	if err != nil {
+		logger.Error().Err(err).Msg("Failed to create HTTP request")
 		return err
 	}
 	req.Header.Add("Authorization", "Bearer "+providerConfig.APIToken)
 	req.Header.Add("X-Team-Uuid", providerConfig.TeamUUID)
 	_, err = http.DefaultClient.Do(req)
 	if err != nil {
+		logger.Error().Err(err).Msg("Failed to send HTTP request")
 		return err
 	}
 
