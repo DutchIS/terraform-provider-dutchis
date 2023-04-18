@@ -179,7 +179,7 @@ func resourceVirtualServerCreate(d *schema.ResourceData, meta interface{}) error
     d.SetId(virtualserver.UUID)
 
 	logger.Info().Msg("Created new virtual server")
-	time.Sleep(5 * time.Second)
+	time.Sleep(1 * time.Second)
 	lock.unlock()
 	return resourceVirtualServerRead(d, meta)
 }
