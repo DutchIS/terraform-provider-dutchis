@@ -4,11 +4,18 @@ import (
 	"encoding/json"
     "io/ioutil"
     "net/http"
-	"log"
 	"bytes"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+type VirtualServer struct {
+	UUID string `json:"uuid"`
+	Name string `json:"name"`
+	Class string `json:"class"`
+	Status string `json:"status"`
+	Node string `json:"node"`
+}
 
 // using a global variable here so that we have an internally accessible
 // way to look into our own resource definition. Useful for dynamically doing typecasts
@@ -17,7 +24,7 @@ var thisResource *schema.Resource
 
 func resourceVirtualServer() *schema.Resource {
 	thisResource = &schema.Resource{
-		Create: resourceVmQemuCreate,
+		Create: resourceVirtualServerCreate,
 
 		Schema: map[string]*schema.Schema {
 			"hostname": {
@@ -86,9 +93,14 @@ func resourceVirtualServer() *schema.Resource {
 	return thisResource
 }
 
-func resourceVmQemuCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVirtualServerCreate(d *schema.ResourceData, meta interface{}) error {
 	providerConfig := meta.(*providerConfiguration)
-	lock := dutchisParallelBegin(providerConfig)
+	lock := parallelBegin(providerConfig)
+
+	logger, err := CreateSubLogger("resourceVirtualServerCreate")
+	if err != nil {
+		return err
+	}
 
 	type NewVirtualServer struct {
 		Hostname string `json:"hostname"`
@@ -115,6 +127,8 @@ func resourceVmQemuCreate(d *schema.ResourceData, meta interface{}) error {
 		Network: d.Get("network").(int),
 		Disk: d.Get("disk").(int),
 	}
+	
+	logger.Info().Msg("Creating new virtual server")
 
 	body, err := json.Marshal(newVirtualServer)
 	if err != nil {
@@ -137,8 +151,57 @@ func resourceVmQemuCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
+	
+    var virtualserver VirtualServer
+    if err := json.Unmarshal(body, &virtualserver); err != nil { 
+        return err
+    }
+	
+    d.SetId(virtualserver.UUID)
 
-	log.Print("[DEBUG][VirtualServerCreate] virtual server creation done!")
+	logger.Info().Msg("Created new virtual server")
 	lock.unlock()
+	return resourceVirtualServerRead(d, meta)
+}
+
+func resourceVirtualServerRead(d *schema.ResourceData, meta interface{}) error {
+	return _resourceVirtualServerRead(d, meta)
+}
+
+func _resourceVirtualServerRead(d *schema.ResourceData, meta interface{}) error {
+	pconf := meta.(*providerConfiguration)
+	lock := parallelBegin(pconf)
+	defer lock.unlock()
+	providerConfig := meta.(*providerConfiguration)
+	
+	logger, err := CreateSubLogger("resourceVirtualServerRead")
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", "https://dutchis.net/api/v1/virtualservers/" + d.Id(), nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", "Bearer "+providerConfig.APIToken)
+	req.Header.Add("X-Team-Uuid", providerConfig.TeamUUID)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	
+    defer resp.Body.Close()
+    body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	
+    var virtualserver VirtualServer
+    if err := json.Unmarshal(body, &virtualserver); err != nil { 
+        return err
+    }
+
+	logger.Info().Msg("Reading configuration for virtual server: " + d.Id())
+
 	return nil
 }

@@ -94,8 +94,8 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	type Permissions struct {
-		success bool `json:"success"`
-		permissions []string `json:"permissions"`
+		Success bool `json:"success"`
+		Permissions []string `json:"permissions"`
 	}
     var result Permissions
     if err := json.Unmarshal(body, &result); err != nil { 
@@ -103,7 +103,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
     }
 
 	for _, permission := range minimumPermissions {
-		if !Contains(result.permissions, permission) {
+		if !Contains(result.Permissions, permission) {
 			return nil, fmt.Errorf("missing permission %v", permission)
 		}
     }
@@ -128,7 +128,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 
 	var mut sync.Mutex
 	return &providerConfiguration{
-		MaxParallel:                        d.Get("pm_parallel").(int),
+		MaxParallel:                        d.Get("dutchis_parallel").(int),
 		CurrentParallel:                    0,
 		Mutex:                              &mut,
 		Cond:                               sync.NewCond(&mut),
@@ -170,7 +170,7 @@ func (lock *apiLockHolder) unlock() {
 	conf.Mutex.Unlock()
 }
 
-func dutchisParallelBegin(conf *providerConfiguration) *apiLockHolder {
+func parallelBegin(conf *providerConfiguration) *apiLockHolder {
 	lock := &apiLockHolder{
 		conf:  conf,
 		locked: false,
