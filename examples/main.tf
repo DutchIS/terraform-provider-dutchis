@@ -17,9 +17,9 @@ resource "virtualserver" "example-vs" {
     os = "ubuntu2204" # OS id
     username = "exampleuser" # Ignored on windows systems
     password = "ferrysekur" # Default user's password
-    sshkeys = {
-        0 = "0b4d8fc1-ddea-11ed-b7cc-9a049341f472"
-    }
+    sshkeys = [
+        "0b4d8fc1-ddea-11ed-b7cc-9a049341f472"
+    ]
     cores = 2 # Number of cores
     memory = 4 # Memory in GB
     network = 1 # Network speed in Gbps

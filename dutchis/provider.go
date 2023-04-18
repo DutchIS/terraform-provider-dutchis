@@ -46,7 +46,7 @@ func Provider() *schema.Provider {
 			},
 			"dutchis_log_levels": {
 				Type:        schema.TypeMap,
-				Optional:    true,
+				Optional:    false,
 				Description: "Configure the logging level to display; trace, debug, info, warn, etc",
 			},
 			"dutchis_log_file": {
@@ -54,6 +54,11 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				Default:     "terraform-plugin-dutchis.log",
 				Description: "Write logs to this specific file",
+			},
+			"dutchis_parallel": {
+				Type:        schema.TypeInt,
+				Optional:    false,
+				Description: "Maximum number of parallel requests to the DutchIS API",
 			},
 		},
 
