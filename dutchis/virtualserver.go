@@ -108,14 +108,6 @@ func resourceVirtualServerCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	logger.Info().Msg("Parsing sshkeys")
-	var sshKeys []string
-	for _, sshKey := range d.Get("sshkeys").([]interface{}) {
-		sshKeys = append(sshKeys, sshKey.(string))
-	}
-
-	logger.Info().Msg("Parsed sshkeys")
-
 	type NewVirtualServer struct {
 		Hostname string `json:"hostname"`
 		Class string `json:"class"`
@@ -135,7 +127,7 @@ func resourceVirtualServerCreate(d *schema.ResourceData, meta interface{}) error
 		Os: d.Get("os").(string),
 		Username: d.Get("username").(string),
 		Password: d.Get("password").(string),
-		Sshkeys: sshKeys,
+		Sshkeys: d.Get("sshkeys").([]string),
 		Cores: d.Get("cores").(int),
 		Memory: d.Get("memory").(int),
 		Network: d.Get("network").(int),
