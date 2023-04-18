@@ -46,7 +46,7 @@ func Provider() *schema.Provider {
 			},
 			"dutchis_log_levels": {
 				Type:        schema.TypeMap,
-				Optional:    false,
+				Required:    true,
 				Description: "Configure the logging level to display; trace, debug, info, warn, etc",
 			},
 			"dutchis_log_file": {
@@ -57,7 +57,7 @@ func Provider() *schema.Provider {
 			},
 			"dutchis_parallel": {
 				Type:        schema.TypeInt,
-				Optional:    false,
+				Required:    true,
 				Description: "Maximum number of parallel requests to the DutchIS API",
 			},
 		},
