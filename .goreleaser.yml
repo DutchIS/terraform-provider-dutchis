@@ -1,5 +1,5 @@
 builds:
-  - id: dutchis-terraform
+  - id: terraform-provider-dutchis
     env:
       - CGO_ENABLED=0
     mod_timestamp: "{{ .CommitTimestamp }}"
@@ -22,12 +22,12 @@ builds:
         goarch: "386"
       - goos: darwin
         goarch: arm
-    binary: "dutchis-terraform_v{{ .Version }}"
+    binary: "terraform-provider-dutchis_v{{ .Version }}"
 archives:
   - format: zip
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "terraform-provider-dutchis_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 checksum:
-  name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
+  name_template: "terraform-provider-dutchis_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
 signs:
   - artifacts: checksum

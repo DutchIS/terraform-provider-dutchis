@@ -72,17 +72,18 @@ test:
 build:
 	@echo " -> Building"
 	mkdir -p bin
-	CGO_ENABLED=0 go build -trimpath -o bin/terraform
-	@echo "Built terraform"
+	CGO_ENABLED=0 go build -trimpath -o bin/terraform-provider-proxmox
+	@echo "Built terraform-provider-dutchis"
 
+# to run only certain tests, run something of the form:  make acctest TESTARGS='-run=TestAccProxmoxVmQemu_DiskSlot'
 acctest: build
-	TF_ACC=1 go test ./dutchis $(TESTARGS)
+	TF_ACC=1 go test ./proxmox $(TESTARGS)
 
 install: build
-	cp bin/terraform $$GOPATH/bin/terraform
+	cp bin/terraform-provider-dutchis $$GOPATH/bin/terraform-provider-dutchis
 
 local-dev-install: build
 	@echo "Building this release $(CURRENT_VERSION_MICRO) on $(KERNEL)/$(ARCH)"
 	rm -rf ~/.terraform.d/plugins/localhost/dutchis/terraform
 	mkdir -p ~/.terraform.d/plugins/localhost/dutchis/terraform/$(MAJOR).$(MINOR).$(NEXT_MICRO)/$(KERNEL)_$(ARCH)/
-	cp bin/terraform ~/.terraform.d/plugins/localhost/dutchis/terraform/$(MAJOR).$(MINOR).$(NEXT_MICRO)/$(KERNEL)_$(ARCH)/
+	cp bin/terraform-provider-dutchis ~/.terraform.d/plugins/localhost/dutchis/terraform/$(MAJOR).$(MINOR).$(NEXT_MICRO)/$(KERNEL)_$(ARCH)/
