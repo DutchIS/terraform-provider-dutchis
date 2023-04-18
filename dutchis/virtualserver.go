@@ -225,7 +225,8 @@ func resourceVirtualServerRead(d *schema.ResourceData, meta interface{}) error {
 			Cpus int `json:"cpus"`
 			Maxmem int `json:"maxmem"`
 			Maxdisk int `json:"maxdisk"`
-		}
+			Installing bool `json:"installing"`
+		} `json:"data"`
 	}
 
     var virtualserver VirtualServer
