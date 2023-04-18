@@ -157,6 +157,7 @@ func resourceVirtualServerCreate(d *schema.ResourceData, meta interface{}) error
 
 	req.Header.Add("Authorization", "Bearer "+providerConfig.APIToken)
 	req.Header.Add("X-Team-Uuid", providerConfig.TeamUUID)
+	req.Header.Add("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to send HTTP request")
