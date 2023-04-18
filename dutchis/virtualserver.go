@@ -25,6 +25,7 @@ var thisResource *schema.Resource
 func resourceVirtualServer() *schema.Resource {
 	thisResource = &schema.Resource{
 		Create: resourceVirtualServerCreate,
+		Read: resourceVirtualServerRead,
 
 		Schema: map[string]*schema.Schema {
 			"hostname": {
