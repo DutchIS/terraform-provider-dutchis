@@ -10,11 +10,14 @@ import (
 )
 
 type VirtualServer struct {
-	UUID string `json:"uuid"`
-	Name string `json:"name"`
-	Class string `json:"class"`
-	Status string `json:"status"`
-	Node string `json:"node"`
+	Success bool `json:"success"`
+	Data struct {
+		UUID string `json:"uuid"`
+		Name string `json:"name"`
+		Class string `json:"class"`
+		Status string `json:"status"`
+		Node string `json:"node"`
+	}
 }
 
 // using a global variable here so that we have an internally accessible
@@ -171,7 +174,13 @@ func resourceVirtualServerCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-    var virtualserver VirtualServer
+	type NewVirtualServerResponse struct {
+		Success bool `json:"success"`
+		Message string `json:"message"`
+		UUID string `json:"uuid"`
+	}
+
+    var virtualserver NewVirtualServerResponse
     if err := json.Unmarshal(body, &virtualserver); err != nil { 
 		logger.Error().Err(err).Msg("Failed to unmarshal JSON")
         return err
@@ -222,7 +231,7 @@ func resourceVirtualServerRead(d *schema.ResourceData, meta interface{}) error {
         return err
     }
 
-	d.Set("hostname", virtualserver.Name)
+	d.Set("hostname", virtualserver.Data.Name)
 
 	logger.Info().Msg("Read configuration for virtual server: " + d.Id())
 
