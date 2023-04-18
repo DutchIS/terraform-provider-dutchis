@@ -5,6 +5,7 @@ import (
     "io/ioutil"
     "net/http"
 	"bytes"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -178,6 +179,7 @@ func resourceVirtualServerCreate(d *schema.ResourceData, meta interface{}) error
     d.SetId(virtualserver.UUID)
 
 	logger.Info().Msg("Created new virtual server")
+	time.Sleep(5 * time.Second)
 	lock.unlock()
 	return resourceVirtualServerRead(d, meta)
 }
