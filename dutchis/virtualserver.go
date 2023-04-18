@@ -22,7 +22,7 @@ func resourceVirtualServer() *schema.Resource {
 		Schema: map[string]*schema.Schema {
 			"hostname": {
 				Type:     schema.TypeString,
-				Optional: false,
+				Required:    true,
 				Description: "The virtual server hostname",
 			},
 			"class": {
@@ -37,7 +37,7 @@ func resourceVirtualServer() *schema.Resource {
 			},
 			"username": {
 				Type:        schema.TypeString,
-				Required:    false,
+				Required:    true,
 				Description: "The username of the virtual server. This is ignored on Windows servers",
 			},
 			"password": {
