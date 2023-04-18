@@ -108,7 +108,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
     }
 
 	logLevels := make(map[string]string)
-	for logger, level := range d.Get("pm_log_levels").(map[string]interface{}) {
+	for logger, level := range d.Get("dutchis_log_levels").(map[string]interface{}) {
 		levelAsString, ok := level.(string)
 		if ok {
 			logLevels[logger] = levelAsString
