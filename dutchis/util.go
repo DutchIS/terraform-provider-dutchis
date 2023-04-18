@@ -6,11 +6,9 @@ import (
 	"log"
 	"os"
 	"regexp"
-	"strconv"
 	"testing"
 	"time"
 
-	pxapi "github.com/Telmate/proxmox-api-go/proxmox"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rs/zerolog"
 )
@@ -150,7 +148,7 @@ func ConfigureLogger(enableOutput bool, logPath string, inputLogLevels map[strin
 	os.Stderr = writerStderr
 
 	// look to see if we should capture all logs going through the native log library
-	// this is mostly useful in this particular case to see logs from the proxmox api library.
+	// this is mostly useful in this particular case to see logs from the api library.
 	// just the presense of the _capturelog key (no matter the level set) is indication we should capture it
 	_, ok = logLevels["_capturelog"]
 	if ok {
@@ -207,128 +205,6 @@ func CreateSubLogger(loggerName string) (zerolog.Logger, error) {
 	// create the logger
 	thisLogger := rootLogger.With().Str("loggerName", loggerName).Logger().Level(level)
 	return thisLogger, nil
-}
-
-func UpdateDeviceConfDefaults(
-	activeDeviceConf pxapi.QemuDevice,
-	defaultDeviceConf *schema.Set,
-) *schema.Set {
-	defaultDeviceConfMap := defaultDeviceConf.List()[0].(map[string]interface{})
-	for key := range defaultDeviceConfMap {
-		if deviceConfigValue, ok := activeDeviceConf[key]; ok {
-			defaultDeviceConfMap[key] = deviceConfigValue
-			switch deviceConfigValue := deviceConfigValue.(type) {
-			case int:
-				sValue := strconv.Itoa(deviceConfigValue)
-				bValue, err := strconv.ParseBool(sValue)
-				if err == nil {
-					defaultDeviceConfMap[key] = bValue
-				}
-			default:
-				defaultDeviceConfMap[key] = deviceConfigValue
-			}
-		}
-	}
-	defaultDeviceConf.Remove(defaultDeviceConf.List()[0])
-	defaultDeviceConf.Add(defaultDeviceConfMap)
-	return defaultDeviceConf
-}
-
-func DevicesSetToMapWithoutId(devicesSet *schema.Set) pxapi.QemuDevices {
-	devicesMap := pxapi.QemuDevices{}
-	i := 1
-	for _, set := range devicesSet.List() {
-		setMap, isMap := set.(map[string]interface{})
-		if isMap {
-			// setMap["id"] = i
-			devicesMap[i] = setMap
-			i += 1
-		}
-	}
-	return devicesMap
-}
-
-type KeyedDeviceMap map[interface{}]pxapi.QemuDevice
-
-func DevicesListToMapByKey(devicesList []interface{}, key string) KeyedDeviceMap {
-	devicesMap := KeyedDeviceMap{}
-	for i, set := range devicesList {
-		setMap := set.(map[string]interface{})
-		if key != "" {
-			devicesMap[setMap[key]] = setMap
-		} else {
-			devicesMap[i] = setMap
-		}
-	}
-	return devicesMap
-}
-
-func DeviceToMap(device pxapi.QemuDevice, key interface{}) KeyedDeviceMap {
-	kdm := KeyedDeviceMap{}
-	kdm[key] = device
-	return kdm
-}
-
-func DevicesListToDevices(devicesList []interface{}, key string) pxapi.QemuDevices {
-	devicesMap := pxapi.QemuDevices{}
-	for key, set := range DevicesListToMapByKey(devicesList, key) {
-		devicesMap[key.(int)] = set
-	}
-	return devicesMap
-}
-
-func AssertNoNonSchemaValues(
-	devices pxapi.QemuDevices,
-	schemaDef *schema.Schema,
-) error {
-	// add an explicit check that the keys in the config.QemuNetworks map are a strict subset of
-	// the keys in our resource schema. if they aren't things fail in a very weird and hidden way
-	for _, deviceEntry := range devices {
-		for key := range deviceEntry {
-			if _, ok := schemaDef.Elem.(*schema.Resource).Schema[key]; !ok {
-				if key == "id" { // we purposely ignore id here as that is implied by the order in the TypeList/QemuDevice(list)
-					continue
-				}
-				return fmt.Errorf("proxmox provider error: proxmox API returned new parameter '%v' we cannot process", key)
-			}
-		}
-	}
-
-	return nil
-}
-
-// Further parses a QemuDevice by normalizing types
-func adaptDeviceToConf(
-	conf map[string]interface{},
-	device pxapi.QemuDevice,
-) map[string]interface{} {
-	// Value type should be one of types allowed by Terraform schema types.
-	for key, value := range device {
-		// This nested switch is used for nested config like in `net[n]`,
-		// where Proxmox uses `key=<0|1>` in string" at the same time
-		// a boolean could be used in ".tf" files.
-		switch conf[key].(type) {
-		case bool:
-			switch value := value.(type) {
-			// If the key is bool and value is int (which comes from Proxmox API),
-			// should be converted to bool (as in ".tf" conf).
-			case int:
-				sValue := strconv.Itoa(value)
-				bValue, err := strconv.ParseBool(sValue)
-				if err == nil {
-					conf[key] = bValue
-				}
-			// If value is bool, which comes from Terraform conf, add it directly.
-			case bool:
-				conf[key] = value
-			}
-		// Anything else will be added as it is.
-		default:
-			conf[key] = value
-		}
-	}
-
-	return conf
 }
 
 func resourceDataToFlatValues(d *schema.ResourceData, resource *schema.Resource) (map[string]interface{}, error) {
@@ -432,22 +308,12 @@ func BoolPointer(b bool) *bool {
 	return &b
 }
 
-func permissions_check(s1 []string, s2 []string) []string {
-
-	var diff []string
-
-	// loop through s2 and check if each element is in s1
-	for _, str2 := range s2 {
-		found := false
-		for _, str1 := range s1 {
-			if str2 == str1 {
-				found = true
-				break
-			}
-		}
-		if !found {
-			diff = append(diff, str2)
+func Contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
 		}
 	}
-	return diff
+
+	return false
 }
