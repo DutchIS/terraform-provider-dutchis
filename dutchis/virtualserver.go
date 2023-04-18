@@ -213,20 +213,22 @@ func resourceVirtualServerRead(d *schema.ResourceData, meta interface{}) error {
 		logger.Error().Err(err).Msg("Failed to read HTTP response")
 		return err
 	}
+
+	logger.Debug().Msg("Received response: " + string(body))
 	
 	type VirtualServer struct {
 		Success bool `json:"success"`
-		Data struct {
-			UUID string `json:"uuid"`
-			Name string `json:"name"`
-			Class string `json:"class"`
-			Status string `json:"status"`
-			Node string `json:"node"`
-			Cpus int `json:"cpus"`
-			Maxmem int `json:"maxmem"`
-			Maxdisk int `json:"maxdisk"`
-			Installing bool `json:"installing"`
-		} `json:"data"`
+		Data    struct {
+			UUID       string `json:"uuid"`
+			Name       string `json:"name"`
+			Class      string `json:"class"`
+			Status     string `json:"status"`
+			Node       string `json:"node"`
+			Cpus       int    `json:"cpus"`
+			Maxmem     int    `json:"maxmem"`
+			Maxdisk    int    `json:"maxdisk"`
+			Installing bool   `json:"installing,omitempty"`
+		} `json:"data"`	
 	}
 
     var virtualserver VirtualServer
