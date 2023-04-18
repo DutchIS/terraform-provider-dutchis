@@ -5,7 +5,6 @@ import (
     "net/http"
     "encoding/json"
     "io/ioutil"
-	"strconv"
 	"sync"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
