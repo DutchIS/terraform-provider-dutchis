@@ -9,17 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type VirtualServer struct {
-	Success bool `json:"success"`
-	Data struct {
-		UUID string `json:"uuid"`
-		Name string `json:"name"`
-		Class string `json:"class"`
-		Status string `json:"status"`
-		Node string `json:"node"`
-	}
-}
-
 // using a global variable here so that we have an internally accessible
 // way to look into our own resource definition. Useful for dynamically doing typecasts
 // so that we can print (debug) our ResourceData constructs
@@ -225,6 +214,20 @@ func resourceVirtualServerRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	
+	type VirtualServer struct {
+		Success bool `json:"success"`
+		Data struct {
+			UUID string `json:"uuid"`
+			Name string `json:"name"`
+			Class string `json:"class"`
+			Status string `json:"status"`
+			Node string `json:"node"`
+			Cpus int `json:"cpus"`
+			Maxmem int `json:"maxmem"`
+			Maxdisk int `json:"maxdisk"`
+		}
+	}
+
     var virtualserver VirtualServer
     if err := json.Unmarshal(body, &virtualserver); err != nil { 
 		logger.Error().Err(err).Msg("Failed to unmarshal JSON")
@@ -232,6 +235,10 @@ func resourceVirtualServerRead(d *schema.ResourceData, meta interface{}) error {
     }
 
 	d.Set("hostname", virtualserver.Data.Name)
+	d.Set("class", virtualserver.Data.Class)
+	d.Set("cores", virtualserver.Data.Cpus)
+	d.Set("memory", virtualserver.Data.Maxmem)
+	d.Set("disk", virtualserver.Data.Maxdisk)
 
 	logger.Info().Msg("Read configuration for virtual server: " + d.Id())
 
