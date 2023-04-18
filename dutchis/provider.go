@@ -28,13 +28,13 @@ func Provider() *schema.Provider {
 		Schema: map[string]*schema.Schema{
 			"dutchis_team_uuid": {
 				Type:        schema.TypeString,
-				Optional:    false,
+				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("DUTCHIS_TEAM_UUID", nil),
 				Description: "Team UUID to which to deploy to.",
 			},
 			"dutchis_api_token": {
 				Type:        schema.TypeString,
-				Optional:    false,
+				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("DUTCHIS_API_TOKEN", nil),
 				Description: "API Secret",
 				Sensitive:   true,
@@ -59,7 +59,7 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"virtualserver":  resourceVirtualServer(),
+			"dutchis_virtualserver":  resourceVirtualServer(),
 		},
 
 		ConfigureFunc: providerConfigure,

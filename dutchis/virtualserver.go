@@ -17,57 +17,67 @@ var thisResource *schema.Resource
 
 func resourceVirtualServer() *schema.Resource {
 	thisResource = &schema.Resource{
-		Create:        resourceVmQemuCreate,
+		Create: resourceVmQemuCreate,
 
 		Schema: map[string]*schema.Schema {
 			"hostname": {
 				Type:     schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The virtual server hostname",
 			},
 			"class": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The Performance class of the virtual server",
 			},
 			"os": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "OS id of the virtual server",
 			},
 			"username": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The username of the virtual server. This is ignored on Windows servers",
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The password of the default user",
 			},
 			"sshkeys": {
 				Type:        schema.TypeList,
 				Required:    true,
+				ForceNew:    true,
 				Description: "Provide the UUID's of ssh keys or provide a ssh key in openssh format.",
 			},
 			"cores": {
 				Type:        schema.TypeInt,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The amount of cores to assign to the virtual server",
 			},
 			"memory": {
 				Type:        schema.TypeInt,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The amount of memory in GB to assign to the virtual server",
 			},
 			"network": {
 				Type:        schema.TypeInt,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The network speed in Gbps for this virtual server",
 			},
 			"disk": {
 				Type:        schema.TypeInt,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The amount of storage space in GB to assign to the virtual server",
 			},
 		},
@@ -77,42 +87,33 @@ func resourceVirtualServer() *schema.Resource {
 }
 
 func resourceVmQemuCreate(d *schema.ResourceData, meta interface{}) error {
-/* 	logger, err := CreateSubLogger("virtualserver_create")
-	if err != nil {
-		return err
-	} */
-
-	// DEBUG print out the create request
-	/* flatValue, _ := resourceDataToFlatValues(d, thisResource)
-	jsonString, _ := json.Marshal(flatValue) */
-
 	providerConfig := meta.(*providerConfiguration)
 	lock := dutchisParallelBegin(providerConfig)
 
 	type NewVirtualServer struct {
-		hostname string `json:"hostname"`
-		class string `json:"class"`
-		os string `json:"os"`
-		username string `json:"username"`
-		password string `json:"password"`
-		sshkeys []string `json:"sshkeys"`
-		cores int `json:"cores"`
-		memory int `json:"memory"`
-		network int `json:"network"`
-		disk int `json:"disk"`
+		Hostname string `json:"hostname"`
+		Class string `json:"class"`
+		Os string `json:"os"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+		Sshkeys []string `json:"sshkeys"`
+		Cores int `json:"cores"`
+		Memory int `json:"memory"`
+		Network int `json:"network"`
+		Disk int `json:"disk"`
 	}
 	
 	newVirtualServer := NewVirtualServer{
-		hostname: d.Get("hostname").(string),
-		class: d.Get("class").(string),
-		os: d.Get("os").(string),
-		username: d.Get("username").(string),
-		password: d.Get("password").(string),
-		sshkeys: d.Get("sshkeys").([]string),
-		cores: d.Get("cores").(int),
-		memory: d.Get("memory").(int),
-		network: d.Get("network").(int),
-		disk: d.Get("disk").(int),
+		Hostname: d.Get("hostname").(string),
+		Class: d.Get("class").(string),
+		Os: d.Get("os").(string),
+		Username: d.Get("username").(string),
+		Password: d.Get("password").(string),
+		Sshkeys: d.Get("sshkeys").([]string),
+		Cores: d.Get("cores").(int),
+		Memory: d.Get("memory").(int),
+		Network: d.Get("network").(int),
+		Disk: d.Get("disk").(int),
 	}
 
 	body, err := json.Marshal(newVirtualServer)
