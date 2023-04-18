@@ -26,6 +26,8 @@ func resourceVirtualServer() *schema.Resource {
 	thisResource = &schema.Resource{
 		Create: resourceVirtualServerCreate,
 		Read: resourceVirtualServerRead,
+		Delete: resourceVirtualServerDelete,
+		Update: resourceVirtualServerUpdate,
 
 		Schema: map[string]*schema.Schema {
 			"hostname": {
@@ -202,7 +204,71 @@ func _resourceVirtualServerRead(d *schema.ResourceData, meta interface{}) error 
         return err
     }
 
+	d.Set("hostname", virtualserver.Name)
+
 	logger.Info().Msg("Reading configuration for virtual server: " + d.Id())
 
 	return nil
+}
+
+func resourceVirtualServerDelete(d *schema.ResourceData, meta interface{}) error {
+	providerConfig := meta.(*providerConfiguration)
+	lock := parallelBegin(providerConfig)
+	defer lock.unlock()
+
+	req, err := http.NewRequest("DELETE", "https://dutchis.net/api/v1/virtualservers/" + d.Id(), nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", "Bearer "+providerConfig.APIToken)
+	req.Header.Add("X-Team-Uuid", providerConfig.TeamUUID)
+	_, err = http.DefaultClient.Do(req)
+
+	return err
+}
+
+func resourceVirtualServerUpdate(d *schema.ResourceData, meta interface{}) error {
+	providerConfig := meta.(*providerConfiguration)
+	lock := parallelBegin(providerConfig)
+
+	logger, err := CreateSubLogger("resourceVirtualServerUpdate")
+	if err != nil {
+		return err
+	}
+
+	type UpdateVirtualServer struct {
+		Cores int `json:"cores"`
+		Memory int `json:"memory"`
+		Network int `json:"network"`
+		Disk int `json:"disk"`
+	}
+	
+	updateVirtualServer := UpdateVirtualServer{
+		Cores: d.Get("cores").(int),
+		Memory: d.Get("memory").(int),
+		Network: d.Get("network").(int),
+		Disk: d.Get("disk").(int),
+	}
+	
+	logger.Info().Msg("Deleting virtual server")
+
+	body, err := json.Marshal(updateVirtualServer)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("PATCH", "https://dutchis.net/api/v1/virtualservers/" + d.Id() + "/specs", bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", "Bearer "+providerConfig.APIToken)
+	req.Header.Add("X-Team-Uuid", providerConfig.TeamUUID)
+	_, err = http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	logger.Info().Msg("Deleted virtual server")
+	lock.unlock()
+	return resourceVirtualServerRead(d, meta)
 }

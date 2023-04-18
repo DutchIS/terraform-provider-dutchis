@@ -178,30 +178,3 @@ func parallelBegin(conf *providerConfiguration) *apiLockHolder {
 	lock.lock()
 	return lock
 }
-
-func resourceId(targetNode string, resType string, vmId int) string {
-	return fmt.Sprintf("%s/%s/%d", targetNode, resType, vmId)
-}
-
-func parseResourceId(resId string) (targetNode string, resType string, vmId int, err error) {
-	if !rxRsId.MatchString(resId) {
-		return "", "", -1, fmt.Errorf("invalid resource format: %s. Must be <node>/<type>/<vmid>", resId)
-	}
-	idMatch := rxRsId.FindStringSubmatch(resId)
-	targetNode = idMatch[1]
-	resType = idMatch[2]
-	vmId, err = strconv.Atoi(idMatch[3])
-	return
-}
-
-func clusterResourceId(resType string, resId string) string {
-	return fmt.Sprintf("%s/%s", resType, resId)
-}
-
-func parseClusterResourceId(resId string) (resType string, id string, err error) {
-	if !rxClusterRsId.MatchString(resId) {
-		return "", "", fmt.Errorf("invalid resource format: %s. Must be <type>/<resourceid>", resId)
-	}
-	idMatch := rxClusterRsId.FindStringSubmatch(resId)
-	return idMatch[1], idMatch[2], nil
-}
