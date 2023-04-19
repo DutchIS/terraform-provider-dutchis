@@ -2,6 +2,7 @@ terraform {
     required_providers {
         dutchis = {
             source  = "dutchis/terraform"
+            version = "1.1.8"
         }
     }
 }
@@ -12,9 +13,10 @@ provider "dutchis" {
 }
 
 resource "virtualserver" "example-vs" {
-    hostname = "example-vs" # Hostname of the virtual server
+    count = 3 # Amount to create
+    hostname = "server-${count.index}" # Hostname of the virtual server
     class = "performance" # Performance class
-    os = "ubuntu2204" # OS id
+    os = "ubuntu2204" # OS
     username = "exampleuser" # Ignored on windows systems
     password = "ferrysekur" # Default user's password
     sshkeys = [
